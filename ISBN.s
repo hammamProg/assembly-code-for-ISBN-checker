@@ -70,5 +70,5 @@ END_ISBN_LOOP 	; if condition in ISBN_LOOP is true
 	
 	;;;;;; check if the number is ISBN by compare with first barity
 	CMP R12, R1
-END
+	END
 
