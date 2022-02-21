@@ -4,36 +4,71 @@ AREA RESET, DATA, READONLY
 __Vectors	DCD 0x20001000
 			DCD Reset_Handler
 		ALIGN
-	;   d1 d2 d3 d4 d5 d6 d7 d8 d9 d10
-ARR	DCB 2 ,1 ,0 ,1 ,2 ,3 ,4 ,5 ,7 ,9
-			
+
+; Array of integers indicate ISBN number
+ARRAY	DCB 5 ,4 ,1 ,4 ,4 ,3 ,2 ,9 ,7 ,9
+
+; =================================================|
+
 	AREA MYCODE, CODE, READONLY
 		ENTRY
 		EXPORT Reset_Handler
 			
 Reset_Handler
 
-;;;;;;;;;; USER CODE ;;;;;;;;;;
 START
-	LDR R2, = ARR
-	MOV R3, #9 ; i, R5 will be i+1
-	ADD R5, R3, #1
-	MOV R4, #0 ; sum 
-LOOP
-	CMP R3, #0
-	BLS LOOP_END
-	LDRB R7,[R2,R3] ; c = arr[i]
-	MUL R8,R7,R5    ; m = i*c
-	ADD R4,R4,R8 
-	SUB R3, R3, #1
-	ADD R5, R3, #1
-	B LOOP
-LOOP_END
-	LDRB R1, [R2] ; d1
-	MOV R12, #11
-	UDIV R6, R4, R12
-	MUL R9,R6,R12
-	SUB R11, R4 ,R9 ; calculated validation digit is saved in R11
-	CMP R11,R1
+	MOV R1, #1     		; i (counter)
+	MOV R4, R1, #1 		; i+1
 	
-	END
+	; Load array to R2
+	LDR R2, = ARRAY
+	
+	: sum var in R3
+	MOV R3, #0 
+
+ISBN_LOOP 
+	;;;;;; first check if the number we scanning is less than 9 
+	CMP R4, #9
+	
+	;;;;;; if we go more than 9 then -> END_ISBN_LOOP label
+	BGT END_ISBN_LOOP
+	
+	;;;;;; load one byte from array -> R5 = array[i]
+	LDRB R5,[R2,R1]
+	
+	;;;;;; R6 = i * R5(array[i])
+	MUL R6, R5 ,R4
+	
+	;;;;;; add R6 result to the sum
+	ADD R3, R3 ,R6
+	
+	;;;;;; increment counter
+	ADD R1, R1 ,#1
+	
+	;;;;;; R4 = i+1
+	ADD R4, R1 ,#1
+	
+	;;;;;; branch to ISBN_LOOP
+	B ISBN_LOOP
+	
+END_ISBN_LOOP 	; if condition in ISBN_LOOP is true
+	
+	;;;;;; R8 = the first element in the array which is the check parity 
+	LDRB R8, [R2]
+	
+	;;;;;; R9 = 11
+	MOV R9, #11
+	
+	;;;;;; Divide sum / 11
+	UDIV R10, R3, R9
+	
+	;;;;;; R11 = calculated divide * 11
+	MUL R11, R10 ,R9
+	
+	SUB R12,R9,R11
+	SUB R12, R9, R12
+	
+	;;;;;; check if the number is ISBN by compare with first barity
+	CMP R12, R1
+END
+
